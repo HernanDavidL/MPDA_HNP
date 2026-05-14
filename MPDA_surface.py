@@ -2,35 +2,6 @@ import rhinoscriptsyntax as rs
 import Rhino.Geometry as rg
 import math
 
-# ---------------------------------------------------------------
-# WAVE PAVILION  —  Grasshopper Python Script
-# ---------------------------------------------------------------
-# WORKFLOW
-#   1. Edit this file in VS Code
-#   2. Copy the full file path  (right-click tab → Copy Path)
-#   3. Paste the path into a Grasshopper Panel
-#   4. Panel  →  Read File component  →  Python 3 Script component
-#
-# INPUT PINS  (add with right-click → Inputs on the Python component)
-#   amp_h   Number Slider  0.0 – 5.0   Horizontal wave amplitude
-#   amp_v   Number Slider  0.0 – 5.0   Vertical wave amplitude
-#   freq_h  Number Slider  1.0 – 8.0   Horizontal frequency
-#   freq_v  Number Slider  1.0 – 8.0   Vertical frequency
-#   div_u   Number Slider  4   – 40    U divisions  (ribbon strips)
-#   div_v   Number Slider  4   – 40    V divisions  (ribbon strips)
-#   width   Number Slider  5.0 – 30.0  Pavilion width  (meters)
-#   length  Number Slider  5.0 – 50.0  Pavilion length (meters)
-#   height  Number Slider  1.0 – 10.0  Peak arch height
-#
-# OUTPUT PINS  (add with right-click → Outputs on the Python component)
-#   surface   →  connect to a Surface parameter or Bake
-#   mesh      →  connect to a Mesh parameter or Mesh Display
-#   points    →  connect to a Point parameter or Point Cloud
-#   strips_u  →  connect to a Curve parameter  (horizontal ribbons)
-#   strips_v  →  connect to a Curve parameter  (vertical ribbons)
-# ---------------------------------------------------------------
-
-
 def wave_z(u, v, ah, av, fh, fv, h):
     """Return the Z height at normalised position (u, v) in [0,1]."""
     z  = ah * math.sin(fh * math.pi * u)

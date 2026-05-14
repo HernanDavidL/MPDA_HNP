@@ -1,14 +1,6 @@
 import Rhino.Geometry as rg
 import math
 
-# Inputs:
-# crv1
-# crv2
-# width
-# height
-# twist_deg
-# sections
-
 breps = []
 frames = []
 profiles = []
