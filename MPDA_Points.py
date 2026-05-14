@@ -1,26 +1,37 @@
 import Rhino.Geometry as rg
 import math
 
-def create_drop_geometry(base_pt, height):
+def create_tear_drop(base_pt, total_height):
    
-    radius = height / 3.0
-   
-    center_pt = rg.Point3d(base_pt.X, base_pt.Y, base_pt.Z + radius)
-    sphere = rg.Sphere(center_pt, radius)
-    drop_brep = sphere.ToBrep()
+    width = abs(total_height) * 0.35
     
+    p1 = rg.Point3d(base_pt.X, base_pt.Y, base_pt.Z + total_height) 
+    p2 = rg.Point3d(base_pt.X + width, base_pt.Y, base_pt.Z + (total_height * 0.7)) 
+    p3 = rg.Point3d(base_pt.X, base_pt.Y, base_pt.Z) 
     
-    plane = rg.Plane.WorldXY
-    plane.Origin = base_pt
+    profile_curve = rg.Curve.CreateInterpolatedCurve([p1, p2, p3], 3)
     
-    z_scale_factor = height / (radius * 2.0)
+    axis_line = rg.Line(base_pt, rg.Point3d(base_pt.X, base_pt.Y, base_pt.Z + 1.0))
     
-    scale_transform = rg.Transform.Scale(plane, 1.0, 1.0, z_scale_factor)
-    drop_brep.Transform(scale_transform)
+    rev_surface = rg.RevSurface.Create(profile_curve, axis_line)
     
-    return drop_brep
+    return rev_surface.ToBrep()
 
 if Point and Height:
-    
-    valid_height = max(0.01, Height)
-    a = create_drop_geometry(Point, valid_height)
+    try:
+        drop_length = -float(Height)
+        
+        drop_brep = create_tear_drop(Point, drop_length) 
+
+        if drop_brep:
+            mesh_params = rg.MeshingParameters.Smooth
+            mesh_parts = rg.Mesh.CreateFromBrep(drop_brep, mesh_params)
+            
+            if mesh_parts and len(mesh_parts) > 0:
+                Mesh = mesh_parts[0]
+                Mesh.Normals.ComputeNormals()
+                Mesh.Compact()
+            else:
+                Mesh = None
+    except Exception as e:
+        Mesh = str(e)
