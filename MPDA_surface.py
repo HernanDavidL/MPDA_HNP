@@ -74,6 +74,3 @@ for i in range(nu + 1):
     crv = rg.Curve.CreateInterpolatedCurve(col, 3)
     if crv:
         strips_v.append(crv)
-
-# The variables surface, mesh, points, strips_u, strips_v
-# are automatically mapped to the output pins of the same name.
