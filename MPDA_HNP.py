@@ -1,4 +1,3 @@
-#Hi guys im Ning
 import rhinoscriptsyntax as rs
 import Rhino.Geometry as rg
 import math
