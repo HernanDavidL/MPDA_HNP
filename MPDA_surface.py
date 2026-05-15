@@ -2,19 +2,22 @@ import rhinoscriptsyntax as rs
 import Rhino.Geometry as rg
 import math
 
-def wave_z(u, v, ah, av, fh, fv, h):
-    """Return the Z height at normalised position (u, v) in [0,1]."""
-    z  = ah * math.sin(fh * math.pi * u)
-    z += av * math.sin(fv * math.pi * v)
-    z += h  * math.sin(math.pi * v)   # main arch curve
-    return z
+def get_z_height(u, v, ah, av, fh, fv, h, dh):
+    
+    z_wave = ah * math.sin(fh * math.pi * u)
+    z_wave += av * math.sin(fv * math.pi * v)
+    z_arch = h * math.sin(math.pi * v)
+    center_u, center_v = 0.5, 0.5
+    dist = math.sqrt((u - center_u)**2 + (v - center_v)**2)
+    
+    falloff = math.exp(-pow(dist * 3.0, 2)) 
+    z_drop = -(falloff * dh) # Negative because it hangs down
+    
+    return z_wave + z_arch + z_drop
 
-
-# --- guard against zero divisions ---
 nu = max(int(div_u), 2)
 nv = max(int(div_v), 2)
 
-# --- build point grid ---
 rows = []
 all_pts = []
 
@@ -25,24 +28,16 @@ for j in range(nv + 1):
     for i in range(nu + 1):
         u = i / float(nu)
         x = u * width
-        z = wave_z(u, v, amp_h, amp_v, freq_h, freq_v, height)
+        
+    
+        z = get_z_height(u, v, amp_h, amp_v, freq_h, freq_v, height, Drop_Height)
+        
         pt = rg.Point3d(x, y, z)
         row.append(pt)
         all_pts.append(pt)
     rows.append(row)
 
-# --- SURFACE (NurbsSurface interpolated through the grid) ---
-surface = rg.NurbsSurface.CreateFromPoints(
-    all_pts,
-    nu + 1,   # point count in U direction
-    nv + 1,   # point count in V direction
-    3,         # degree U
-    3          # degree V
-)
-
-# --- MESH (quad faces) ---
 mesh = rg.Mesh()
-
 for pt in all_pts:
     mesh.Vertices.Add(pt)
 
@@ -57,20 +52,14 @@ for j in range(nv):
 mesh.Normals.ComputeNormals()
 mesh.Compact()
 
-# --- POINTS ---
-points = all_pts
-
-# --- STRIPS U  (horizontal ribbons — run across the width) ---
-strips_u = []
-for j in range(nv + 1):
-    crv = rg.Curve.CreateInterpolatedCurve(rows[j], 3)
-    if crv:
-        strips_u.append(crv)
-
-# --- STRIPS V  (longitudinal ribbons — run along the length) ---
+strips_u = [rg.Curve.CreateInterpolatedCurve(r, 3) for r in rows]
 strips_v = []
 for i in range(nu + 1):
     col = [rows[j][i] for j in range(nv + 1)]
-    crv = rg.Curve.CreateInterpolatedCurve(col, 3)
-    if crv:
-        strips_v.append(crv)
+    strips_v.append(rg.Curve.CreateInterpolatedCurve(col, 3))
+
+
+mesh_out = mesh
+curves_u = strips_u
+curves_v = strips_v
+points = all_pts
