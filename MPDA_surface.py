@@ -21,6 +21,7 @@ nv = max(int(div_v), 2)
 rows = []
 all_pts = []
 
+
 for j in range(nv + 1):
     v = j / float(nv)
     y = v * length
