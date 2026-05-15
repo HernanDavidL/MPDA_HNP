@@ -3,24 +3,29 @@ import Rhino.Geometry as rg
 import math
 
 def get_z_height(u, v, ah, av, fh, fv, h, dh):
-    
+    # 1. Sine Wave Texture
     z_wave = ah * math.sin(fh * math.pi * u)
     z_wave += av * math.sin(fv * math.pi * v)
+    
+    # 2. Main Arch
     z_arch = h * math.sin(math.pi * v)
+    
+    # 3. Center Drop (Gaussian Falloff)
     center_u, center_v = 0.5, 0.5
     dist = math.sqrt((u - center_u)**2 + (v - center_v)**2)
     
+    # Increase the '3.0' to make the drop tighter/sharper
     falloff = math.exp(-pow(dist * 3.0, 2)) 
-    z_drop = -(falloff * dh) # Negative because it hangs down
+    z_drop = -(falloff * dh) 
     
     return z_wave + z_arch + z_drop
+
 
 nu = max(int(div_u), 2)
 nv = max(int(div_v), 2)
 
 rows = []
 all_pts = []
-
 
 for j in range(nv + 1):
     v = j / float(nv)
@@ -30,8 +35,8 @@ for j in range(nv + 1):
         u = i / float(nu)
         x = u * width
         
-    
-        z = get_z_height(u, v, amp_h, amp_v, freq_h, freq_v, height, Drop_Height)
+        # Use the lowercase 'drop_height' here
+        z = get_z_height(u, v, amp_h, amp_v, freq_h, freq_v, height, drop_height)
         
         pt = rg.Point3d(x, y, z)
         row.append(pt)
@@ -59,8 +64,7 @@ for i in range(nu + 1):
     col = [rows[j][i] for j in range(nv + 1)]
     strips_v.append(rg.Curve.CreateInterpolatedCurve(col, 3))
 
-
 mesh_out = mesh
+points = all_pts
 curves_u = strips_u
 curves_v = strips_v
-points = all_pts
