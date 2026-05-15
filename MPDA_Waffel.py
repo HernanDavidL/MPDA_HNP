@@ -232,6 +232,17 @@ if frames_mesh and frames_mesh.Vertices.Count > 0:
     except:
         frames_curve = []
 
+# Debugging counters for Grasshopper inspection
+frames_naked_count = 0
+frames_candidates_count = 0
+frames_closed_count = 0
+try:
+    frames_naked_count = len(edge_curves) if 'edge_curves' in locals() and edge_curves else 0
+    frames_candidates_count = len(candidates) if 'candidates' in locals() and candidates else 0
+    frames_closed_count = len(closed) if 'closed' in locals() and closed else 0
+except:
+    pass
+
 # Collect points for visualization
 # -----------------------------------
 for crvs in [strips_u, strips_v]:
