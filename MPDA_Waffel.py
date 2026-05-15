@@ -1,20 +1,13 @@
 import Rhino.Geometry as rg
 
 
-
 waffel_frames = None
 
 points = []
 
-
-
 rib_height = float(rib_height)
 
 rib_width = float(rib_width)
-
-
-
-# Convert single curves to lists if needed
 
 if not isinstance(strips_u, list):
 
@@ -229,8 +222,62 @@ if frames_mesh and frames_mesh.Vertices.Count > 0:
                     frames_curve = [best_curve]
                 else:
                     frames_curve = list(candidates)
+                # Fallback: if we still have no outline curve, compute 2D convex hull of vertices
+                if not frames_curve and frames_mesh and frames_mesh.Vertices.Count > 0:
+                    try:
+                        pts3 = [frames_mesh.Vertices[i] for i in range(frames_mesh.Vertices.Count)]
+                        if pts3:
+                            # project to XY and deduplicate
+                            seen = set()
+                            pts2 = []
+                            for p in pts3:
+                                key = (round(p.X, 6), round(p.Y, 6))
+                                if key in seen:
+                                    continue
+                                seen.add(key)
+                                pts2.append((p.X, p.Y))
+
+                            def cross(o, a, b):
+                                return (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0])
+
+                            pts2_sorted = sorted(pts2)
+                            if len(pts2_sorted) >= 3:
+                                lower = []
+                                for p in pts2_sorted:
+                                    while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+                                        lower.pop()
+                                    lower.append(p)
+                                upper = []
+                                for p in reversed(pts2_sorted):
+                                    while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+                                        upper.pop()
+                                    upper.append(p)
+                                hull2 = lower[:-1] + upper[:-1]
+                                # build 3d points using average Z
+                                avgZ = sum([v.Z for v in pts3]) / len(pts3)
+                                poly_pts = [rg.Point3d(x, y, avgZ) for (x, y) in hull2]
+                                if len(poly_pts) > 1:
+                                    # ensure closed
+                                    if poly_pts[0].DistanceTo(poly_pts[-1]) > 1e-6:
+                                        poly_pts.append(poly_pts[0])
+                                    pl = rg.Polyline(poly_pts)
+                                    if pl.IsValid and pl.Count > 1:
+                                        frames_curve = [rg.PolylineCurve(pl)]
+                    except:
+                        pass
     except:
         frames_curve = []
+
+# Debugging counters for Grasshopper inspection
+frames_naked_count = 0
+frames_candidates_count = 0
+frames_closed_count = 0
+try:
+    frames_naked_count = len(edge_curves) if 'edge_curves' in locals() and edge_curves else 0
+    frames_candidates_count = len(candidates) if 'candidates' in locals() and candidates else 0
+    frames_closed_count = len(closed) if 'closed' in locals() and closed else 0
+except:
+    pass
 
 # Collect points for visualization
 # -----------------------------------
